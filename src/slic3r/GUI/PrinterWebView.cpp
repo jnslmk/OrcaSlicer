@@ -31,6 +31,7 @@
 #include <wx/webview.h>
 
 #include <memory>
+#include <string>
 #include <utility>
 
 class wxWindow;
@@ -115,6 +116,16 @@ static void inject_vue_resize_workaround(wxWebView *webView)
         wxWEBVIEW_INJECT_AT_DOCUMENT_START
     );
 }
+
+static void inject_elegoo_camera_workaround(wxWebView *webView)
+{
+    static const wxString script = [] {
+        std::string contents;
+        load_string_file(boost::filesystem::path(resources_dir()) / "web/elegoolink/camera-cache.js", contents);
+        return wxString::FromUTF8(contents);
+    }();
+    webView->AddUserScript(script, wxWEBVIEW_INJECT_AT_DOCUMENT_START);
+}
 #endif
 
 // The strings of the page shown when the printer has no connection set up
@@ -186,6 +197,7 @@ void PrinterWebView::create_browser()
 
 #ifdef __linux__
     inject_vue_resize_workaround(m_browser);
+    inject_elegoo_camera_workaround(m_browser);
 
     auto cookiesPath = boost::filesystem::path(data_dir() + "/cache/cookies.db");
     auto wv = static_cast<WebKitWebView*>(m_browser->GetNativeBackend());
@@ -314,8 +326,9 @@ void PrinterWebView::SendAPIKey()
         wxLogError("Could not add script message handler");
 
 #ifdef __linux__
-    // Re-inject the vue-resize/WebKitGTK workaround that RemoveAllUserScripts just cleared.
+    // Re-inject the WebKitGTK workarounds that RemoveAllUserScripts just cleared.
     inject_vue_resize_workaround(m_browser);
+    inject_elegoo_camera_workaround(m_browser);
 #endif
     add_page_strings(m_browser);
 

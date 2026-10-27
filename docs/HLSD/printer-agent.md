@@ -216,6 +216,17 @@ Cloud URL and signaling requests are routed through `NetworkAgent` to the cloud 
 the device. Local URL requests are routed to the active printer agent. The distinction keeps cloud
 account services device-scoped while preserving the current one-LAN-agent/one-printer model.
 
+The legacy Device web page is separate from these playback backends. On Linux,
+`PrinterWebView` isolates classic ELEGOO `:3031/video` MJPEG images in sandboxed,
+image-only frames. WebKit can retain a multipart image request after its DOM image
+is removed; destroying the containing frame cancels that loader instead. Only the
+visible desktop or mobile image owns a stream, and each activation uses a fresh
+cache key. Camera teardown never stops the parent document, so printer uploads,
+fetches, and the control WebSocket are unaffected. The native regression check is
+`python scripts/tests/test_elegoo_camera.py` (GTK3, WebKit2GTK 4.1, PyGObject and
+pycairo, with a display, a finite process-group supervisor and the workstation
+graphics-verification lock).
+
 ## Compatibility constraints
 
 The printer-agent boundary intentionally preserves several existing application contracts:
